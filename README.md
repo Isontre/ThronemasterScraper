@@ -1,1 +1,1 @@
-# thronemaster_scraper
+# ThronemasterScraper
