@@ -1,67 +1,85 @@
-from PySide import QtCore, QtGui, QtWebKit
-import sys
-from bs4 import BeautifulSoup
+from thronescraper import cook_soup
 
-def loadPage(url):
-	page = QtWebKit.QWebPage()
-	loop = QtCore.QEventLoop() # Create event loop
-	page.mainFrame().loadFinished.connect(loop.quit) # Connect loadFinished to loop quit
-	page.mainFrame().load(url)
-	loop.exec_() # Run event loop, it will end on loadFinished
-	return page.mainFrame().toHtml()
-	
+
+
 def Winner(soup):
 	return soup('table')[1].findAll('tr')[-2].findAll('td')[2].text.split(' ', 1)[0]
 
 def Settings(soup):
-
+	"""
+	Returns -1,-1,-1,-1 if it wasn't a 6 player game or anything else went wrong
+	Returns tob,2nd_ed_house_cards,lani_ship,gj_start position otherwise. 0=="NO", 1="YES"  
+	"""
 	try:
+		# Checks if the first 6 entries are PLANNING which indicates if 6 players are participating
 		if(soup('table')[1].findAll('tr')[7].findAll('th')[1].string!="PLANNING"):
-			return 0
+			return -1,-1,-1,-1
 	except:
-		print "No 6 players"
-		return 0
+		print( "No 6 players")
+		return -1,-1,-1,-1
 	
 	#check if game is over:
 	if(soup('table')[1].findAll('tr')[-2].findAll('td')[2].text.split(' ', 1)[1]!="wins this game of thrones!"):
-		print "The game seems not to be over"
-		return 0
+		print( "The game seems not to be over or was aborted.")
+		return -1,-1,-1,-1
 	
 	
-	lala=[]
+	game_settings=[]
 	for row in soup.findAll('table')[2].findAll('tr'):
 		try:
-			list=row.findAll('td')[1].text
-			lala.append(list)
+			setting = row.findAll('td')[0].text
+			value = row.findAll('td')[1].text
+			game_settings.append([setting,value])
 		except:
 			continue
 	
-	#Give 0 if ToB:
-	if(lala[8]=="YES"):
-		print "ToB"
-		return 0
-	elif(lala[8]=="NO"):
-		print "No ToB"
-	else:
-		print "Some Error occured"
-		return 0
+	for settings in game_settings:
+		if "Tides Of Battle" in settings[0]:
+			if(settings[1]=="YES"):
+				print( "ToB:","YES")
+				tob = 1
+			elif(settings[1]=="NO"):
+				print( "ToB:","NO")
+				tob = 0
+			else:
+				print( "Some Error occured")
+				return -1,-1,-1,-1
+		elif "House Cards" in settings[0]:
+			if(settings[1]=="YES"):
+				print( "House Cards:","YES")
+				house_cards = 1
+			elif(settings[1]=="NO"):
+				print( "House Cards:","NO")
+				house_cards = 0
+			else:
+				print( "Some Error occured")
+				return -1,-1,-1,-1
+		elif "Greyjoy Start Pos" in settings[0]:
+			if(settings[1]=="YES"):
+				print( "Greyjoy Start Pos:","YES")
+				gj_start = 1
+			elif(settings[1]=="NO"):
+				print( "Greyjoy Start Pos:","NO")
+				gj_start = 0
+			else:
+				print( "Some Error occured")
+				return -1,-1,-1,-1
+		elif "Lannister Ship" in settings[0]:
+			if(settings[1]=="YES"):
+				print( "Lannister Ship:","YES")
+				lani_ship = 1
+			elif(settings[1]=="NO"):
+				print( "Lannister Ship:","NO")
+				lani_ship = 0
+			else:
+				print( "Some Error occured")
+				return -1,-1,-1,-1
 
-	#2nd Edition HouseCards	
-	if(lala[3]=="NO"):
-		print "1st Edition House Cards"
-		return 0
-	elif(lala[3]=="YES"):
-		print "2nd Edition House Cards"
-	else:
-		print "Some Error occured"
-		return 0
-		
-	
-	return 1
+	return tob,house_cards,lani_ship,gj_start
 
 def is_rated(soup):
 	if(soup.findAll('table')[3].find('tr').text.split(' ', 1)[0]!="\nRATED"):
-		print "Unrated game"
+		print( "Unrated game")
 		return "unrated"
 	else:
 		return "rated"
@@ -71,39 +89,6 @@ def get_Date(soup):
 
 
 
-filename="6pgames"
-end=150000
-
-try:
-	with open(filename+'.txt', 'r') as the_file:
-		for line in the_file:
-			pass
-		last = int(line.split(',', 1)[0])
-		print "Last Number:",last
-except:
-	last=0
-	print"No file found"
-
-
-
-app = QtGui.QApplication(sys.argv)	
-
-for number in range(last+1,end):
-	url="http://game.thronemaster.net/?game="+str(number)+"&show=log"
-	print '-----------------------------------------------------'
-	print number
-	html = loadPage(url)
-	print "..html loaded"
-	soup = BeautifulSoup(html,"html.parser")
-	if(Settings(soup)):
-		print "Right Settings"			
-		row=str(number)+","+Winner(soup)+","+get_Date(soup)+","+is_rated(soup)
-		with open(filename+".txt", "a") as f:
-			f.write("%s\n" % row)
-	else:
-		print "Not the right settings"
-
-app.exit()
 
 
 
