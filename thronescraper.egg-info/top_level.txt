@@ -1,8 +1,0 @@
-Castles
-Fights
-MathematicaAnalysis
-Openings
-data
-htmls
-scripts
-thronescraper

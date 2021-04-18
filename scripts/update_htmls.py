@@ -7,7 +7,7 @@ from thronescraper.misc import Page
 numbers = get_numbers()
 
 
-page = Page("http://game.thronemaster.net/?game="+str(numbers[0]))
+page = Page("")
 for number in numbers:
 	if os.path.isfile("htmls/"+str(number)+".html"):
 		continue
@@ -15,7 +15,7 @@ for number in numbers:
 	print( '-----------------------------------------------------')
 	print( number,"/",numbers[-1])
 
-	page.update_url(url)
+	page.open(url)
 	html = page.html # if this doesn't work it might be an utf8 encoding problem. before it was .encode("utf-8")
 	with open("htmls/"+str(number)+".html", 'w') as the_file:
 		the_file.write(str(html))
